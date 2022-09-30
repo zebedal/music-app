@@ -1,65 +1,63 @@
-import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
+import prisma from "lib/prisma";
+import { artistsData } from "./songsData";
 
-export const artistsData: {
-  name: string;
-  songs: any[];
-}[] = [
-  {
-    name: "Glitch",
-    songs: [
-      {
-        name: "Fermi Paradox",
-        duration: 235,
+const run = async () => {
+  await Promise.all(
+    artistsData.map(async (artist) => {
+      return prisma.artist.upsert({
+        where: { name: artist.name },
+        update: {},
+        create: {
+          name: artist.name,
+          songs: {
+            create: artist.songs.map((song) => ({
+              name: song.name,
+              duration: song.duration,
+              url: song.url,
+            })),
+          },
+        },
+      });
+    })
+  );
 
-        url: "https://dl.dropboxusercontent.com/s/7xmpwvvek6szx5n/fermi-paradox.mp3?dl=0",
-      },
-    ],
-  },
-  {
-    name: "Purple Cat",
-    songs: [
-      {
-        name: "Long Day",
-        duration: 185,
-        url: "https://dl.dropboxusercontent.com/s/9h90r7ku3df5o9y/long-day.mp3?dl=0",
-      },
-    ],
-  },
-  {
-    name: "Ben Sound",
-    songs: [
-      {
-        name: "The Elevator Bossa Nova",
-        duration: 238,
-        url: "https://dl.dropboxusercontent.com/s/7dh5o3kfjcz0nh3/The-Elevator-Bossa-Nova.mp3?dl=0",
-      },
-    ],
-  },
-  {
-    name: "LiQWYD",
-    songs: [
-      {
-        name: "Winter",
-        duration: 162,
-        url: "https://dl.dropboxusercontent.com/s/tlx2zev0as500ki/winter.mp3?dl=0",
-      },
-    ],
-  },
-  {
-    name: "FSM Team",
-    songs: [
-      {
-        name: "Eternal Springtime",
-        duration: 302,
-        url: "https://dl.dropboxusercontent.com/s/92u8d427bz0b1t8/eternal-springtime.mp3?dl=0",
-      },
-      {
-        name: "Astronaut in a Submarine",
-        duration: 239,
-        artist: "FSM Team",
-        url: "https://dl.dropboxusercontent.com/s/9b43fr6epbgji4f/astronaut-in-a-submarine.mp3?dl=0",
-      },
-    ],
-  },
-];
+  const salt = bcrypt.genSaltSync();
+
+  const user = await prisma.user.upsert({
+    where: { email: "user@test.com" },
+    update: {},
+    create: {
+      email: "user@test.com",
+      password: bcrypt.hashSync("password", salt),
+    },
+  });
+
+  const songs = await prisma.song.findMany({});
+  await Promise.all(
+    new Array(10).fill(1).map(async (_, i) => {
+      return prisma.playlist.create({
+        data: {
+          name: `Playlist #${i + 1}`,
+          user: {
+            connect: { id: user.id },
+          },
+          songs: {
+            connect: songs.map((song) => ({
+              id: song.id,
+            })),
+          },
+        },
+      });
+    })
+  );
+};
+
+run()
+  .catch((e) => {
+    console.log(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
