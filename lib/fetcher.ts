@@ -6,7 +6,7 @@ const fetcher = (url: string, data = undefined) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
-  });
+  }).then((res) => res.json());
 };
 
 export default fetcher;

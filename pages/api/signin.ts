@@ -12,6 +12,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       email,
     },
   });
+  console.log(user);
 
   if (user && bcrypt.compareSync(password, user.password)) {
     const token = jwt.sign(

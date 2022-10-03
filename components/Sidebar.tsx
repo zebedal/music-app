@@ -10,8 +10,11 @@ import {
 import { musicMenu, navMenu, playList } from "mocks/data";
 import NextLink from "next/link";
 import NextImage from "next/image";
+import usePlayList from "hooks/usePlaylist";
 
 const Sidebar = () => {
+  const { playlists } = usePlayList();
+
   return (
     <Box width="100%" height="100%" bg="black" paddingX="5px" color="gray">
       <Box paddingY="20px" height="100%">
@@ -72,11 +75,11 @@ const Sidebar = () => {
         <Divider color="gray.700" />
         <Box height="66%" overflowY="auto" paddingY="20px">
           <List spacing={3}>
-            {playList.map((item) => (
-              <ListItem paddingX="20px" key={item}>
+            {playlists.map((item) => (
+              <ListItem paddingX="20px" key={item.id}>
                 <LinkBox>
                   <NextLink href="/">
-                    <LinkOverlay>{item}</LinkOverlay>
+                    <LinkOverlay>{item.name}</LinkOverlay>
                   </NextLink>
                 </LinkBox>
               </ListItem>
